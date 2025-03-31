@@ -326,8 +326,8 @@ export const findAllICOs = async (
 
     data.costMint = data.costMint.toBase58();
     data.startPrice = data.startPrice.toNumber();
-    data.endPrice = data.endPrice.toNumber();
-    data.startDate = data.startDate.toNumber();
+    data.endPrice = data.endPrice;
+    data.startDate = data.startDate;
     data.endDate = data.endDate.toNumber();
 
     data.bonusReserve = data.bonusReserve.toNumber();

@@ -1,4 +1,4 @@
-import { Program, web3 } from '@coral-xyz/anchor';
+import { Program, Wallet, web3 } from '@coral-xyz/anchor';
 import * as anchor from '@coral-xyz/anchor';
 import fs from 'fs';
 import NodeWallet from '@coral-xyz/anchor/dist/cjs/nodewallet';
@@ -32,16 +32,24 @@ let program: Program<IcoLaunchpad> = null;
 let provider: anchor.Provider = null;
 let payer: NodeWallet = null;
 
+export const loadWalletFromKeypair = (keypair: string) => {
+  const walletKeypair = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(fs.readFileSync(keypair, 'utf-8'))), {
+    skipValidation: true,
+  });
+  const wallet = new NodeWallet(walletKeypair);
+  return wallet;
+};
+
 /**
  * Set cluster, provider, program
  * If rpc != null use rpc, otherwise use cluster param
  * @param cluster - cluster ex. mainnet-beta, devnet ...
- * @param keypair - wallet keypair
+ * @param wallet - wallet keypair or adapter
  * @param rpc - rpc
  */
 export const setClusterConfig = async (
   cluster: web3.Cluster,
-  keypair: string,
+  wallet: NodeWallet | Wallet,
   rpc?: string
 ) => {
   if (!rpc) {
@@ -50,11 +58,19 @@ export const setClusterConfig = async (
     solConnection = new web3.Connection(rpc);
   }
 
-  const walletKeypair = Keypair.fromSecretKey(
+  // Configure the client to use the local cluster.
+  provider = new anchor.AnchorProvider(solConnection, wallet as any, {
+    skipPreflight: false,
+    commitment: 'confirmed',
+  });
+  anchor.setProvider(provider);
+  payer = wallet;
+
+/*  const walletKeypair = Keypair.fromSecretKey(
     Uint8Array.from(JSON.parse(fs.readFileSync(keypair, 'utf-8'))),
     { skipValidation: true }
   );
-  const wallet = new NodeWallet(walletKeypair);
+  const wallet = new NodeWallet(walletKeypair);*/
 
   // Configure the client to use the local cluster.
   provider = new anchor.AnchorProvider(solConnection, wallet, {
@@ -312,8 +328,8 @@ export const getIcoInfo = async (icoPot: PublicKey) => {
     amount: data.amount.toNumber(),
 
     costMint: data.costMint.toBase58(),
-    startPrice: data.startPrice.toNumber(),
-    endPrice: data.endPrice.toNumber(),
+    startPrice: data.startPrice,
+    endPrice: data.endPrice,
     startDate: data.startDate.toNumber(),
     endDate: data.endDate.toNumber(),
 
