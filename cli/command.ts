@@ -224,6 +224,10 @@ programCommand('buy-token')
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   .requiredOption('-i, --ico <string>')
   .requiredOption('-a, --amount <number>', 'amount to buy ico tokens')
+    .option(
+        '-ea --evm_chain_address <string>',
+        'evm chain address if memo is required'
+    )
   .option(
     '-ip --ico_is_token22 <boolean>',
     'should true if ico mint is token 2022'
@@ -233,7 +237,7 @@ programCommand('buy-token')
     'should true if cost mint is token 2022'
   )
   .action(async (directory, cmd) => {
-    const { env, keypair, rpc, ico, amount, ico_is_token22, cost_is_token22 } =
+    const { env, keypair, evm_chain_address, rpc, ico, amount, ico_is_token22, cost_is_token22 } =
       cmd.opts();
 
     console.log('Solana Cluster:', env);
@@ -245,6 +249,7 @@ programCommand('buy-token')
     await buyToken(
       new PublicKey(ico),
       amount as string,
+      evm_chain_address ?? undefined,
       !ico_is_token22 ? undefined : true,
       !cost_is_token22 ? undefined : true
     );

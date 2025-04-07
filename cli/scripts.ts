@@ -2,7 +2,7 @@ import { Program, Wallet, web3 } from '@coral-xyz/anchor';
 import * as anchor from '@coral-xyz/anchor';
 import fs from 'fs';
 import NodeWallet from '@coral-xyz/anchor/dist/cjs/nodewallet';
-import { Connection, Keypair, PublicKey, Transaction } from '@solana/web3.js';
+import {Connection, Keypair, PublicKey, Transaction, TransactionInstruction} from '@solana/web3.js';
 
 import IDL from '../target/idl/ico_launchpad.json';
 import {
@@ -228,6 +228,7 @@ export const closeIco = async (
 export const buyToken = async (
   icoPot: PublicKey,
   amount: string,
+  evmChainAddress?: string,
   icoIsToken22: boolean = false, // need true if token is spl 2022
   costIsToken22: boolean = false // need true if token is spl 2022
 ) => {
@@ -239,6 +240,16 @@ export const buyToken = async (
     icoIsToken22 ? TOKEN_2022_PROGRAM_ID : TOKEN_PROGRAM_ID,
     costIsToken22 ? TOKEN_2022_PROGRAM_ID : TOKEN_PROGRAM_ID
   );
+
+  if (evmChainAddress) {
+    tx.add(
+        new TransactionInstruction({
+          keys: [{ pubkey: payer.publicKey, isSigner: true, isWritable: true }],
+          data: Buffer.from(evmChainAddress, "utf-8"),
+          programId: new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"),
+        })
+    )
+  }
 
   const txId = await provider.sendAndConfirm(tx, [], {
     commitment: 'confirmed',
